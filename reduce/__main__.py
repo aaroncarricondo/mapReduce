@@ -24,7 +24,7 @@ def main(args):
     
     for i in range(0, int(numDiv)):
     
-        name = "map" + str(i)
+        name = "mapCW" + str(i)
         #Get the dictionary
         d = cos.get_object("noobucket", name).decode('utf-8-sig')
         d = ast.literal_eval(d)
