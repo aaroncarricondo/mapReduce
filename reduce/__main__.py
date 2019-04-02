@@ -10,6 +10,7 @@ def main(args):
     #Get parameters
     numDiv = args["numDiv"]
     resultName = args["resultName"]
+    option = args["option"]
     
     #Instantiate COS
     #COS parameters
@@ -22,9 +23,14 @@ def main(args):
     
     final_dict = {}
     
+    if (option == "CW"):
+        prefix = "mapCW"
+    else:
+        prefix = "mapWC"
+        
     for i in range(0, int(numDiv)):
     
-        name = "mapCW" + str(i)
+        name = prefix + str(i)
         #Get the dictionary
         d = cos.get_object("noobucket", name).decode('utf-8-sig')
         d = ast.literal_eval(d)

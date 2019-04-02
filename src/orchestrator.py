@@ -25,6 +25,11 @@ with open('ibm_cloud_config', 'r') as config_file:
 connector = ibm_cf_connector.CloudFunctions(res['ibm_cf'])
 cos = cos_backend.cos_backend(res['ibm_cos'])
 
+#Eliminate previous dictionaries done:
+for i in cos.list_objects("noobucket", "finalDict"):
+    cos.delete_object("noobucket", str(i))
+
+
 #Create map functions
 compZip = open("mapCW.zip", 'rb')
 connector.create_action("mapCW", compZip.read())
@@ -71,7 +76,7 @@ for i in range(0, numDiv):
     start = str(intervals[i])
     fi = str(intervals[i+1] - 1)
     #Add new values for the keys in dictionary
-    params.update({"start" : start, "fi" : fi, "resultName" : "mapCW"+str(i)})
+    params.update({"start" : start, "fi" : fi, "resultName" : "mapCW" + str(i)})
     
     connector.invoke("mapCW", params)
 
@@ -116,17 +121,24 @@ print("Done, now Reduce")
 compZip = open("reduce.zip", 'rb')
 connector.create_action("reduce", compZip.read())
 
-#Fill params
-params = res['ibm_cos']
-params.update({"numDiv" : str(numDiv), "resultName" : "finalDict"})
-
 #--------------REDUCE----------------
+#Fill params
+
+params = res['ibm_cos']
+
+#-------COUNT WORDS------------
+params.update({"numDiv" : str(numDiv), "resultName" : "finalDictCW" , "option" : "CW"})
 connector.invoke("reduce", params)
 
-while(len(cos.list_objects("noobucket", "final")) != 1):
+#-------WORD COUNT------------
+params.update({"numDiv" : str(numDiv), "resultName" : "finalDictWC", "option" : "WC"})
+connector.invoke("reduce", params)
+
+while(len(cos.list_objects("noobucket", "finalDict")) < 2):
     sleep(1)
 
 
 #Check final dictionary
-print(cos.get_object("noobucket", "finalDict").decode('utf-8-sig'))
+print(cos.get_object("noobucket", "finalDictCW").decode('utf-8-sig'))
+print(cos.get_object("noobucket", "finalDictWC").decode('utf-8-sig'))
 
