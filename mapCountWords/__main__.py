@@ -11,6 +11,8 @@ def main(args):
     fi = str(args["fi"])
     name = args["fileName"]
     result = args["resultName"]
+    option = args["option"]
+
     #COS parameters
     endpoint = args["endpoint"]
     secret_key = args["secret_key"]
@@ -43,17 +45,29 @@ def main(args):
     #------------------------------------
     #Let's count words
     d = {}
+    if ( option == "CW"):
     
-    for word in words:
-        
-        if word in d:
-            value = d.get(word)
-            value+=1
-        else:
-            value = 1
+        for word in words:
             
-        d.update({word : value})
+            if word in d:
+                value = d.get(word)
+                value+=1
+            else:
+                value = 1
+                
+            d.update({word : value})
     
+    else:
+        
+        for word in words:
+        
+            if ("word") in d:
+                value = d.get("word")
+            else:
+                value = 1
+            
+            d.update({ "word" : value + 1})
+            
     #Upload file with dictionary to COS
     cos.put_object("noobucket", result, str(d))
     

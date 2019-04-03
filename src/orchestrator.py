@@ -31,11 +31,8 @@ for i in cos.list_objects("noobucket", "finalDict"):
 
 
 #Create map functions
-compZip = open("mapCW.zip", 'rb')
-connector.create_action("mapCW", compZip.read())
-
-compZip = open("mapWC.zip", 'rb')
-connector.create_action("mapWC", compZip.read())
+compZip = open("map.zip", 'rb')
+connector.create_action("map", compZip.read())
 
 #Get parameters, # partitions and filename
 numDiv = int(sys.argv[1])
@@ -76,9 +73,13 @@ for i in range(0, numDiv):
     start = str(intervals[i])
     fi = str(intervals[i+1] - 1)
     #Add new values for the keys in dictionary
-    params.update({"start" : start, "fi" : fi, "resultName" : "mapCW" + str(i)})
+    #CountWords
+    params.update({"start" : start, "fi" : fi, "resultName" : "mapCW" + str(i), "option" : "CW"})
+    connector.invoke("map", params)
     
-    connector.invoke("mapCW", params)
+    #WordCount
+    params.update({"resultName" : "mapWC" + str(i), "option" : "WC"})
+    connector.invoke("map", params)    
 
 #-----------------------------
 #Prove that map it's done:
@@ -87,22 +88,7 @@ while (len(list) != numDiv ):
     sleep(1.5)
     list = cos.list_objects("noobucket", "mapCW")
     print (list, len(list))
-    
-
-#-------------------------------
-#------MAP------WORDCOUNT------
-#-------------------------------    
-
-for i in range(0, numDiv):
-    
-    start = str(intervals[i])
-    fi = str(intervals[i+1] - 1)
-    #Add new values for the keys in dictionary
-    params.update({"start" : start, "fi" : fi, "resultName" : "mapWC"+str(i)})
-    
-    
-    connector.invoke("mapWC", params)    
-
+        
 #-----------------------------
 #Prove that map it's done:
 list = cos.list_objects("noobucket", "mapWC")
@@ -110,7 +96,6 @@ while (len(list) != numDiv ):
     sleep(1.5)
     list = cos.list_objects("noobucket", "mapWC")
     print (list, len(list))  
-
 
 print("Done, now Reduce")
 
