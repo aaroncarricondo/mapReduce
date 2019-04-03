@@ -28,6 +28,9 @@ cos = cos_backend.cos_backend(res['ibm_cos'])
 #Eliminate previous dictionaries done:
 for i in cos.list_objects("noobucket", "finalDict"):
     cos.delete_object("noobucket", str(i))
+    
+for i in cos.list_objects("noobucket", "map"):
+    cos.delete_object("noobucket", str(i))
 
 
 #Create map functions
