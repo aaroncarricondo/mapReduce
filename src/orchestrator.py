@@ -45,15 +45,16 @@ size = int(cos.head_object("noobucket", fileName).get("content-length"))
 
 #Numero de divisions i sumem 1 a size, per a que l'ultim chunk s'afagi be
 chunk = int(size/numDiv)
-size = size
+if ((size % numDiv) != 0):
+    chunk = chunk + 1 + int((size % numDiv) / numDiv)
 
 
 #Definim i omplim la taula de intervals
 intervals = numpy.arange(0, size, chunk).tolist()
 
 #If chunk is not multiple, one more Div
-if((size % chunk) != 0):
-    numDiv = numDiv + 1
+#if((size % chunk) != 0):
+    #numDiv = numDiv + 1
     
 intervals.append(size)
 
