@@ -89,7 +89,8 @@ def main(args):
     channel.basic_publish(exchange='',
                       routing_key='map_queue',
                       body= result)
-    
+
+    print(" [x] Sent 'Hello World!'")
     connection.close()
     
     #---------------------------------------------------------------------------------------
