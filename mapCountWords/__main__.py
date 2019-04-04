@@ -21,7 +21,7 @@ def main(args):
     params = pika.URLParameters(url)
     connection = pika.BlockingConnection(params)
     channel = connection.channel() # start a channel
-    channel.queue_declare(queue='map_queue') # Declare a queue
+    channel.queue_declare(queue='map_queue', durable=True, exclusive=False, auto_delete=False) # Declare a queue
         
     #---------------------------------------------------------------------------------------
     

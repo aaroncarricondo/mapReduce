@@ -95,6 +95,7 @@ channel.basic_consume(callback, queue='map_queue')
 params = res['ibm_cos']
 params.update({"fileName" : fileName, "ibm_rabbit" : rabbit})
 
+print("Let's count:")
 #-------------------------------
 #------MAP------COUNTWORDS------
 #-------------------------------
