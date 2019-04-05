@@ -4,13 +4,24 @@ Created on 31 mar. 2019
 @author: aaroni34
 '''
 import cos_backend
-import ast
+import ast, os, pika
 
 def main(args):
     #Get parameters
     numDiv = args["numDiv"]
     resultName = args["resultName"]
     option = args["option"]
+    rabbit = str(args['ibm_rabbit'])
+    
+    #--------------------------------------------------------------------------------------
+    # Access the CLODUAMQP_URL environment variable and parse it (fallback to localhost)
+    url = os.environ.get('CLOUDAMQP_URL', rabbit)
+    params = pika.URLParameters(url)
+    connection = pika.BlockingConnection(params)
+    channel = connection.channel() # start a channel
+    channel.queue_declare(queue='reduce_queue', durable=True, exclusive=False, auto_delete=False) # Declare a queue
+        
+    #---------------------------------------------------------------------------------------
     
     #Instantiate COS
     #COS parameters
@@ -50,6 +61,16 @@ def main(args):
     
     #Upload the result dictionary
     cos.put_object("noobucket", resultName, str(final_dict))
+    
+    #---------------------------------------------------------------------------------------
+    
+    channel.basic_publish(exchange='',
+                      routing_key='reduce_queue',
+                      body= resultName)
+    
+    connection.close()
+    
+    #---------------------------------------------------------------------------------------
     
     
     return final_dict

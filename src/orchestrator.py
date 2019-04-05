@@ -97,6 +97,26 @@ def callback_map(channel, method, header, body):
 
 channel.basic_consume(callback_map, queue='map_queue')
 
+#----------------------
+#---- REDUCE QUEUE ----
+channel.queue_declare(queue='reduce_queue', durable=True, exclusive=False, auto_delete=False)
+
+# Method that will receive our messages and stop consuming after 10
+def callback_reduce(channel, method, header, body): 
+    
+    print ("File %r generated" % body)
+    
+    # Acknowledge message receipt (Eliminate receipt messages)
+    channel.basic_ack(delivery_tag = method.delivery_tag)
+    
+    # We've received numDiv * 2 messages, stop consuming
+    global messages 
+    messages += 1
+    if messages >= 2:
+        channel.stop_consuming()
+
+#Not declaring the basic 
+
 #-----------------------------------------------------------------------------
 #--------------------------START WORD COUNT-----------------------------------
 #-----------------------------------------------------------------------------
@@ -143,8 +163,16 @@ connector.invoke("reduce", params)
 params.update({"numDiv" : str(numDiv), "resultName" : "finalDictWC", "option" : "WC"})
 connector.invoke("reduce", params)
 
-while(len(cos.list_objects("noobucket", "finalDict")) < 2):
-    sleep(1)
+#-------------------------------
+#----REDUCE------CONSUME--------
+#-------------------------------
+# Restart counter
+messages = 0
+#Define new queue consume with callback_reduce
+channel.basic_consume(callback_reduce, queue='reduce_queue')
+#Start consuming
+print(' Waiting for messages:')
+channel.start_consuming()
 
 #Check final dictionary
 print(cos.get_object("noobucket", "finalDictCW").decode('utf-8-sig'))
