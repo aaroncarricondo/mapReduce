@@ -4,53 +4,48 @@ Created on 13 mar. 2019
 @author: aaroni34
 '''
 
-from src import cos_backend
-from src import ibm_cf_connector
-import sys, yaml, numpy
-import pika
+import sys, yaml, numpy, pika
+from src import cos_backend, ibm_cf_connector
 from time import sleep
 
-
-#Load COS and Fucntions information
+#-----------------------------------------------------------------------------
+#--------------------------Initializations-----------------------------------
+#-----------------------------------------------------------------------------
+#Load COS, Functions and RabbitAMQP information
 with open('ibm_cloud_config', 'r') as config_file:
     try:
         
         res = yaml.safe_load(config_file)
         
     except yaml.YAMLError as exc:
+        
         print(exc)
-
 
 #Instantiate connector and cos
 connector = ibm_cf_connector.CloudFunctions(res['ibm_cf'])
 cos = cos_backend.cos_backend(res['ibm_cos'])
 
-
+#-----------------------------------------
+#----------------- COS -------------------
 #Eliminate previous dictionaries done:
 for i in cos.list_objects("noobucket", "finalDict"):
     cos.delete_object("noobucket", str(i))
     
 for i in cos.list_objects("noobucket", "map"):
     cos.delete_object("noobucket", str(i))
-
-
-#Create map functions
-compZip = open("map.zip", 'rb')
-connector.create_action("map", compZip.read())
-
-#Get parameters, # partitions and filename
+    
+#Get parameters, # partitions, filename and finally file size
 numDiv = int(sys.argv[1])
 fileName = str(sys.argv[2])
-
 size = int(cos.head_object("noobucket", fileName).get("content-length"))
 
-#Numero de divisions i sumem 1 a size, per a que l'ultim chunk s'afagi be
+#Create the interval array
+#Partitions number and add 1 to size --> last chunk problem
 chunk = int(size/numDiv)
 if ((size % numDiv) != 0):
     chunk = chunk + 1 + int((size % numDiv) / numDiv)
 
-
-#Definim i omplim la taula de intervals
+#Fill the interval array
 intervals = numpy.arange(0, size, chunk).tolist()
 intervals.append(size)
 
@@ -60,29 +55,41 @@ print("Chunk: " + str(chunk))
 print("NumDivs: " + str(numDiv))
 print ("Intervals: ", intervals)
 
+#-----------------------------------------------
+#----------------- Functions -------------------
+#Create map function
+compZip = open("map.zip", 'rb')
+connector.create_action("map", compZip.read())
+#Create reduce function
+compZip = open("reduce.zip", 'rb')
+connector.create_action("reduce", compZip.read())
+
+#-----------------------------------------------
+#---------------- RabbitAMQP -------------------
+#Get URL
 rabbit = res['ibm_rabbit']
-#-----------------------------------------------------------------------------
+
 # Declare connection and new queue on RABBITAMQ
-# url = os.environ.get('CLOUDAMQP_URL', rabbit)
 params = pika.URLParameters(str(rabbit))
 connection = pika.BlockingConnection(params)
 channel = connection.channel() # start a channel
 
+#----------------------
+#--------- MAP --------
 channel.queue_declare(queue='map_queue', durable=True, exclusive=False, auto_delete=False)
-#channel.queue_purge()
 
 # Start our counter at 0
 messages = 0
 
 # Method that will receive our messages and stop consuming after 10
 def callback_map(channel, method, header, body): 
-    print ("Message:")
+    
     print ("File %r generated" % body)
     
     # Acknowledge message receipt (Eliminate receipt messages)
     channel.basic_ack(delivery_tag = method.delivery_tag)
     
-    # We've received numDiv messages, stop consuming
+    # We've received numDiv * 2 messages, stop consuming
     global messages 
     messages += 1
     if messages >= (numDiv * 2):
@@ -90,6 +97,8 @@ def callback_map(channel, method, header, body):
 
 channel.basic_consume(callback_map, queue='map_queue')
 
+#-----------------------------------------------------------------------------
+#--------------------------START WORD COUNT-----------------------------------
 #-----------------------------------------------------------------------------
 #Map fixed parameters
 params = res['ibm_cos']
@@ -101,35 +110,29 @@ print("Let's count:")
 #-------------------------------
 for i in range(0, numDiv):
     
+    #Define start byte and last byte for every map
     start = str(intervals[i])
     fi = str(intervals[i+1] - 1)
-    #Add new values for the keys in dictionary
+    
     #CountWords
     params.update({"start" : start, "fi" : fi, "resultName" : "mapCW" + str(i), "option" : "CW"})
     connector.invoke("map", params)
-    
     #WordCount
     params.update({"resultName" : "mapWC" + str(i), "option" : "WC"})
     connector.invoke("map", params)    
     
-#-----------------------------------------------------------------------------
-#Try RABBITMQ QUEUE
-    
-print(' [*] Waiting for messages:')
+#-------------------------------
+#------MAP------CONSUME---------
+#-------------------------------
+print(' Waiting for messages:')
 channel.start_consuming()
-#-----------------------------------------------------------------------------
+
 print("Done, now Reduce")
 
 #--------------------------------
-#------------Reduce-------------- 
+#------------REDUCE-------------- 
 #--------------------------------
-
-compZip = open("reduce.zip", 'rb')
-connector.create_action("reduce", compZip.read())
-
-#--------------REDUCE----------------
-#Fill paramsx
-
+#Fill params
 params = res['ibm_cos']
 
 #-------COUNT WORDS------------
@@ -142,7 +145,6 @@ connector.invoke("reduce", params)
 
 while(len(cos.list_objects("noobucket", "finalDict")) < 2):
     sleep(1)
-
 
 #Check final dictionary
 print(cos.get_object("noobucket", "finalDictCW").decode('utf-8-sig'))
