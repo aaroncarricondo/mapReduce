@@ -55,3 +55,13 @@ def mapRed ():
 
 
 mapRed()
+
+string = "Hola  Que  tal"
+print(string.rsplit(' ', 1)[0])
+string = string.split(' ')
+print("First: ", string)
+
+string = list(filter(None, string))
+
+
+print("Second: ", string)

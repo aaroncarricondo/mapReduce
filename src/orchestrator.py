@@ -81,7 +81,7 @@ channel.queue_declare(queue='map_queue', durable=True, exclusive=False, auto_del
 # Start our counter at 0
 messages = 0
 
-# Method that will receive our messages and stop consuming after 10
+# Method that will receive our messages and stop consuming
 def callback_map(channel, method, header, body): 
     
     print ("File %r generated" % body)
@@ -101,7 +101,7 @@ channel.basic_consume(callback_map, queue='map_queue')
 #---- REDUCE QUEUE ----
 channel.queue_declare(queue='reduce_queue', durable=True, exclusive=False, auto_delete=False)
 
-# Method that will receive our messages and stop consuming after 10
+# Method that will receive our messages and stop
 def callback_reduce(channel, method, header, body): 
     
     print ("File %r generated" % body)

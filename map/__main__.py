@@ -25,7 +25,6 @@ def main(args):
         
     #---------------------------------------------------------------------------------------
     
-
     #COS parameters
     endpoint = args["endpoint"]
     secret_key = args["secret_key"]
@@ -35,9 +34,19 @@ def main(args):
     cos = cos_backend.cos_backend({ "endpoint" : endpoint, "secret_key" : secret_key, "access_key" : access_key})
     inter = {'Range' : 'bytes=' + start + '-' + fi}
     
-    text = cos.get_object("noobucket", name, extra_get_args=inter)
-    #Decode binary to String
-    text = text.decode('utf-8-sig')
+    start = int(start)
+    while ( start > 0):
+        inter = {'Range' : 'bytes=' + str(start) + '-' + fi}
+        #Get text file
+        text = cos.get_object("noobucket", name, extra_get_args=inter)
+        #Decode binary to String
+        text = text.decode('utf-8-sig')
+        
+        first_char = text[:1]
+        if (first_char == ' '):
+            break
+        start = start - 1
+     
     
     #------------------------------------
     #Delete punctuation signs
