@@ -7,7 +7,7 @@ Created on 13 mar. 2019
 from src import cos_backend
 from src import ibm_cf_connector
 import sys, yaml, numpy
-import pika, os
+import pika
 from time import sleep
 
 
@@ -75,7 +75,7 @@ channel.queue_declare(queue='map_queue', durable=True, exclusive=False, auto_del
 messages = 0
 
 # Method that will receive our messages and stop consuming after 10
-def callback(channel, method, header, body): 
+def callback_map(channel, method, header, body): 
     print ("Message:")
     print ("File %r generated" % body)
     
@@ -85,10 +85,10 @@ def callback(channel, method, header, body):
     # We've received numDiv messages, stop consuming
     global messages 
     messages += 1
-    if messages >= 8:
+    if messages >= (numDiv * 2):
         channel.stop_consuming()
 
-channel.basic_consume(callback, queue='map_queue')
+channel.basic_consume(callback_map, queue='map_queue')
 
 #-----------------------------------------------------------------------------
 #Map fixed parameters
@@ -136,7 +136,7 @@ params = res['ibm_cos']
 params.update({"numDiv" : str(numDiv), "resultName" : "finalDictCW" , "option" : "CW"})
 connector.invoke("reduce", params)
 
-#-------WORD COUNT------------
+#-------WORD COUNT------------    
 params.update({"numDiv" : str(numDiv), "resultName" : "finalDictWC", "option" : "WC"})
 connector.invoke("reduce", params)
 

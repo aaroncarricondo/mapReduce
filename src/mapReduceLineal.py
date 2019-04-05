@@ -7,6 +7,7 @@ Created on 20 mar. 2019
 def mapRed ():
     ###########
     #Read file
+    
     f = open("pg2000.txt", "r")
     inputString = f.read()
     
