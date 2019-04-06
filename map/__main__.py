@@ -34,18 +34,27 @@ def main(args):
     cos = cos_backend.cos_backend({ "endpoint" : endpoint, "secret_key" : secret_key, "access_key" : access_key})
     inter = {'Range' : 'bytes=' + start + '-' + fi}
     
-    start = int(start)
-    while ( start > 0):
-        inter = {'Range' : 'bytes=' + str(start) + '-' + fi}
-        #Get text file
+    if (start == '0'):
         text = cos.get_object("noobucket", name, extra_get_args=inter)
         #Decode binary to String
         text = text.decode('utf-8-sig')
         
-        first_char = text[:1]
-        if (first_char == ' '):
-            break
-        start = start - 1
+    else:
+        
+        start = int(start)
+        
+        while ( True ):
+            inter = {'Range' : 'bytes=' + str(start) + '-' + fi}
+            #Get text file
+            text = cos.get_object("noobucket", name, extra_get_args=inter)
+            #Decode binary to String
+            text = text.decode('utf-8-sig')
+            
+            first_char = text[:1]
+            if (first_char == ' '):
+                break
+            
+            start = start - 1
      
     
     #------------------------------------
