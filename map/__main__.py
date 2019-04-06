@@ -57,6 +57,15 @@ def main(args):
             
             start = start - 1
     
+    #Don't take the last word if it doesn't end in Blank
+    
+    last_char = text[-1:]
+    
+    if ( last_char == ' ' or last_char == '.' or last_char == ',' or last_char == '?' or last_char == '!' or last_char == ';' or last_char == ')' or last_char == '(' ):
+        
+        text.rsplit(' ', 1)[0]
+    
+    
     
     #------------------------------------
     #Delete punctuation signs

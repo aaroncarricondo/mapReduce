@@ -15,14 +15,30 @@ def mapRed ():
     
     lineList = inputString.splitlines()
     #lineList = list(filter(None, lineList))
-    lineList = map(lambda s: s.replace('.',''), lineList)
-    lineList = map(lambda s: s.replace(',',''), lineList)
-
+    #Delete punctuation signs
+    # Define punctuation
+    punctuations = '''!()-[]{};:'"\,<>./?@#$%^&*_~'''
+    
     
     dicts = []
+    Wdicts = []
     
     for x in lineList:
         newdict = {}
+        
+        #Substitute
+        for char in punctuations:
+            x = x.replace(char,'')
+        
+        punctuations = '\n\r\t'
+        
+        #Substitute
+        for char in punctuations:
+            x = x.replace(char,' ')
+            
+        #Delete space key
+        lineWords = filter(None, x.split(' '))
+        
         lineWords = x.split(' ')
         
         for word in lineWords:
@@ -55,13 +71,3 @@ def mapRed ():
 
 
 mapRed()
-
-string = "Hola  Que  tal"
-print(string.rsplit(' ', 1)[0])
-string = string.split(' ')
-print("First: ", string)
-
-string = list(filter(None, string))
-
-
-print("Second: ", string)
