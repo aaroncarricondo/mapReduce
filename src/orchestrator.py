@@ -154,6 +154,7 @@ print("Done, now Reduce")
 #--------------------------------
 #Fill params
 params = res['ibm_cos']
+params.update({"ibm_rabbit" : rabbit})
 
 #-------COUNT WORDS------------
 params.update({"numDiv" : str(numDiv), "resultName" : "finalDictCW" , "option" : "CW"})

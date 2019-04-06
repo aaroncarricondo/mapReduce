@@ -34,6 +34,7 @@ def main(args):
     cos = cos_backend.cos_backend({ "endpoint" : endpoint, "secret_key" : secret_key, "access_key" : access_key})
     inter = {'Range' : 'bytes=' + start + '-' + fi}
     
+    #Take first word if its broken
     if (start == '0'):
         text = cos.get_object("noobucket", name, extra_get_args=inter)
         #Decode binary to String
@@ -55,7 +56,7 @@ def main(args):
                 break
             
             start = start - 1
-     
+    
     
     #------------------------------------
     #Delete punctuation signs
