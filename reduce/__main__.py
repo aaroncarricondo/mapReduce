@@ -5,6 +5,7 @@ Created on 31 mar. 2019
 '''
 import cos_backend
 import ast, os, pika
+from collections import OrderedDict
 
 def main(args):
     #Get parameters
@@ -60,11 +61,11 @@ def main(args):
             final_dict.update({key : finalValue})
             
             
-    #sorted_x = sorted(final_dict.items(), key=lambda kv: kv[1])
-    #final_dict = collections.OrderedDict(sorted_x)
+    #Order dictionary
+    a = OrderedDict(sorted(final_dict.items(), key = lambda x: x[1]))
     
     #Upload the result dictionary
-    cos.put_object("noobucket", resultName, str(final_dict))
+    cos.put_object("noobucket", resultName, str(dict(a)))
     
     #---------------------------------------------------------------------------------------
     
