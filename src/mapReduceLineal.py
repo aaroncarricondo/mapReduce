@@ -69,5 +69,18 @@ def mapRed ():
     print(finaldict)
     
 
-
 mapRed()
+
+text = "Hola que  tal"
+last_char = text[-1:]
+print(last_char)
+text.lower()
+print(text)
+if ( last_char != ' ' or last_char != '.' or last_char != ',' ):
+        
+        print("Entro")
+        text = text.rsplit(' ', 1)[0]
+        print("Salgo")
+
+        
+print (text)

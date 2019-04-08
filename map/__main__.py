@@ -57,17 +57,18 @@ def main(args):
             
             start = start - 1
     
-    #Don't take the last word if it doesn't end in Blank
     
+    #Don't take the last word if it doesn't end in Blank
     last_char = text[-1:]
     
-    if ( last_char == ' ' or last_char == '.' or last_char == ',' or last_char == '?' or last_char == '!' or last_char == ';' or last_char == ')' or last_char == '(' ):
+    if ( last_char != ' ' and last_char != '.' and last_char != ',' ):
         
-        text.rsplit(' ', 1)[0]
-    
+        text = text.rsplit(' ', 1)[0]
     
     
     #------------------------------------
+    #Lower case
+    text = text.lower()
     #Delete punctuation signs
     # Define punctuation
     punctuations = '''!()-[]{};:'"\,<>./?@#$%^&*_~'''
@@ -108,6 +109,7 @@ def main(args):
                 value = 1
             
             d.update({ "word" : value + 1})
+            
             
     #Upload file with dictionary to COS
     cos.put_object("noobucket", result, str(d))

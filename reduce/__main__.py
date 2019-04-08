@@ -58,6 +58,10 @@ def main(args):
                 finalValue = value
         
             final_dict.update({key : finalValue})
+            
+            
+    #sorted_x = sorted(final_dict.items(), key=lambda kv: kv[1])
+    #final_dict = collections.OrderedDict(sorted_x)
     
     #Upload the result dictionary
     cos.put_object("noobucket", resultName, str(final_dict))
