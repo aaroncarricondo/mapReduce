@@ -75,7 +75,7 @@ connection = pika.BlockingConnection(params)
 channel = connection.channel() # start a channel
 
 #----------------------
-#--------- MAP --------
+#----- MAP QUEUE ------
 channel.queue_declare(queue='map_queue', durable=True, exclusive=False, auto_delete=False)
 
 # Start our counter at 0

@@ -8,8 +8,8 @@ def mapRed ():
     ###########
     #Read file
     
-    f = open("pg2000.txt", "r")
-    inputString = f.read()
+    f = open("pg2000.txt", "rb")
+    inputString = f.read().decode('utf-8-sig')
     
     inputString = inputString.replace('.','')
     
@@ -17,29 +17,22 @@ def mapRed ():
     #lineList = list(filter(None, lineList))
     #Delete punctuation signs
     # Define punctuation
-    punctuations = '''!()-[]{};:'"\,<>./?@#$%^&*_~'''
+    punctuations = '''!()-[]{};:'"\,<>.=?@#$%^&*_~\n\r\t'''
     
     
     dicts = []
-    Wdicts = []
+    dicts2 = []
     
     for x in lineList:
         newdict = {}
-        
-        #Substitute
-        for char in punctuations:
-            x = x.replace(char,'')
-        
-        punctuations = '\n\r\t'
-        
+        newdict2 = {}
         #Substitute
         for char in punctuations:
             x = x.replace(char,' ')
-            
+        
         #Delete space key
         lineWords = filter(None, x.split(' '))
         
-        lineWords = x.split(' ')
         
         for word in lineWords:
             if word in newdict:
@@ -48,11 +41,21 @@ def mapRed ():
             else:
                 value = 1
             
+            if "word" in newdict2:
+                value2 = newdict2.get("word")
+                value2 += 1
+            else:
+                value2 = 1
+            
+            newdict2.update({"word" : value2})
+
             newdict.update({word : value})
         
         dicts.append(newdict)
+        dicts2.append(newdict2)
     
     finaldict = {}
+    finaldict2 = {}
     
     for x in dicts:
         for key, value in x.items():
@@ -65,8 +68,20 @@ def mapRed ():
         
             finaldict.update({key : finalValue})
     
+    for x in dicts2:
+        for key, value in x.items():
+            
+            if key in finaldict2:
+                finalValue = finaldict2.get(key)
+                finalValue += value
+            else:
+                finalValue = value
+        
+            finaldict2.update({key : finalValue})
+    
     
     print(finaldict)
+    print(finaldict2)
     
 
 mapRed()

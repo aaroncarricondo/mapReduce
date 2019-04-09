@@ -7,6 +7,7 @@ Created on 24 mar. 2019
 import cos_backend
 import pika, os
 
+
 def main(args):
     start = str(args["start"])
     fi = str(args["fi"])
@@ -25,83 +26,68 @@ def main(args):
         
     #---------------------------------------------------------------------------------------
     
-    #COS parameters
-    endpoint = args["endpoint"]
-    secret_key = args["secret_key"]
-    access_key = args["access_key"]
-    
     #Instanciate cos
-    cos = cos_backend.cos_backend({ "endpoint" : endpoint, "secret_key" : secret_key, "access_key" : access_key})
+    cos = cos_backend.cos_backend(args)
     inter = {'Range' : 'bytes=' + start + '-' + fi}
     
-    #Define punctuations
-    close_punctuations = '''!)]}-;:'",>.? '''
+    #Get partition
+    text = cos.get_object("noobucket", name, extra_get_args=inter)
+    #Decode binary to String
+    text = text.decode('utf-8-sig')
     
-    
-    #Take first word if its broken
-    if (start == '0'):
-        text = cos.get_object("noobucket", name, extra_get_args=inter)
-        #Decode binary to String
-        text = text.decode('utf-8-sig')
-        
-    else:
-        
-        start = int(start) - 1
-        
-        inter = {'Range' : 'bytes=' + str(start) + '-' + fi}
-        #Get text file
-        text = cos.get_object("noobucket", name, extra_get_args=inter)
-        #Decode binary to String
-        text = text.decode('utf-8-sig')
-        
-        first_char = text[:1]
-        
-        if ( close_punctuations.find(first_char) == -1 ):
-            
-            start = start - 1
-            while ( True ):
-                inter = {'Range' : 'bytes=' + str(start) + '-' + fi}
-                #Get text file
-                text = cos.get_object("noobucket", name, extra_get_args=inter)
-                #Decode binary to String
-                text = text.decode('utf-8-sig')
-                
-                first_char = text[:1]
-                if (first_char == ' '):
-                    break
-                
-                start = start - 1
-    
-    
-    #Don't take the last word if it doesn't end in Blank
-    last_char = text[-1:]
-    
-    if ( close_punctuations.find(last_char) == -1 ):
-        
-        text = text.rsplit(' ', 1)[0]
-    
-    cos.put_object("noobucket", "text" + result, text)
-    
-    #Delete punctuation signs
+    #Parse text --> delete punctuations
     # Define punctuation
-    punctuations = '''!()-[]{};:'"\,<>./?@#$%^&*_~'''
-    #Substitute
-    for char in punctuations:
-        text = text.replace(char,'')
-    
-    punctuations = '\n\r\t'
+    punctuations = '''!()-[]{};:'"\,<>.?@#$%^&*_~=\n\r\t'''
     
     #Substitute
     for char in punctuations:
         text = text.replace(char,' ')
     
-    #------------------------------------
+    #Don't take the last word if it doesn't end in Blank
+    last_char = text[-1:]
+    
+    if ( last_char != ' ' ):
+        
+        text = text.rsplit(' ', 1)[0]
+    
+    #Search word not taken by last partition (if it is not taken, not the first partition)
+    start = int(start)
+    
+    if ( start != 0 ):
+    
+        new_word = ""
+        start = start - 1
+        
+        #Start collecting previous word characters
+        while ( True ):
+            
+            inter = {'Range' : 'bytes=' + str(start) + '-' + str(start)}
+            #Get text file
+            char_aux = cos.get_object("noobucket", name, extra_get_args=inter)
+            #Decode binary to String
+            char_aux = char_aux.decode('utf-8-sig')
+            
+            #If its a blank, stop collecting characters
+            if (char_aux != ' '):
+                new_word += char_aux
+            else:
+                break;
+            
+            #Next character
+            start = start - 1
+        
+        #Add new word to text
+        text = new_word + text
+    
     #Lower case
     text = text.lower()
     
+    #----------------------------------------------------------------------------------------
+    #----------------------------------------------------------------------------------------
+    # For debugging ...
+    #cos.put_object("noobucket", "text" + result, text)
     
-    
-    #Delete space key
+    #Delete space key and split words
     words = filter(None, text.split(' '))
     
     #------------------------------------
@@ -130,8 +116,7 @@ def main(args):
                 value = 1
             
             d.update({ "word" : value})
-            
-            
+    
     #Upload file with dictionary to COS
     cos.put_object("noobucket", result, str(d))
     
@@ -144,6 +129,5 @@ def main(args):
     connection.close()
     
     #---------------------------------------------------------------------------------------
-
     
     return d
