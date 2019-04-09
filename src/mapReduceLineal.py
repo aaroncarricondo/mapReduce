@@ -71,16 +71,8 @@ def mapRed ():
 
 mapRed()
 
-text = "Hola que  tal"
-last_char = text[-1:]
-print(last_char)
-text.lower()
-print(text)
-if ( last_char != ' ' or last_char != '.' or last_char != ',' ):
-        
-        print("Entro")
-        text = text.rsplit(' ', 1)[0]
-        print("Salgo")
+punc = '''!)]}-;:'",>.?'''
+char = 'm'
 
-        
-print (text)
+if (punc.find(char) == -1):
+    print("YEs")

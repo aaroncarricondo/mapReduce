@@ -34,6 +34,10 @@ def main(args):
     cos = cos_backend.cos_backend({ "endpoint" : endpoint, "secret_key" : secret_key, "access_key" : access_key})
     inter = {'Range' : 'bytes=' + start + '-' + fi}
     
+    #Define punctuations
+    close_punctuations = '''!)]}-;:'",>.? '''
+    
+    
     #Take first word if its broken
     if (start == '0'):
         text = cos.get_object("noobucket", name, extra_get_args=inter)
@@ -42,33 +46,42 @@ def main(args):
         
     else:
         
-        start = int(start)
+        start = int(start) - 1
         
-        while ( True ):
-            inter = {'Range' : 'bytes=' + str(start) + '-' + fi}
-            #Get text file
-            text = cos.get_object("noobucket", name, extra_get_args=inter)
-            #Decode binary to String
-            text = text.decode('utf-8-sig')
-            
-            first_char = text[:1]
-            if (first_char == ' '):
-                break
+        inter = {'Range' : 'bytes=' + str(start) + '-' + fi}
+        #Get text file
+        text = cos.get_object("noobucket", name, extra_get_args=inter)
+        #Decode binary to String
+        text = text.decode('utf-8-sig')
+        
+        first_char = text[:1]
+        
+        if ( close_punctuations.find(first_char) == -1 ):
             
             start = start - 1
+            while ( True ):
+                inter = {'Range' : 'bytes=' + str(start) + '-' + fi}
+                #Get text file
+                text = cos.get_object("noobucket", name, extra_get_args=inter)
+                #Decode binary to String
+                text = text.decode('utf-8-sig')
+                
+                first_char = text[:1]
+                if (first_char == ' '):
+                    break
+                
+                start = start - 1
     
     
     #Don't take the last word if it doesn't end in Blank
     last_char = text[-1:]
     
-    if ( last_char != ' ' and last_char != '.' and last_char != ',' ):
+    if ( close_punctuations.find(last_char) == -1 ):
         
         text = text.rsplit(' ', 1)[0]
     
+    cos.put_object("noobucket", "text" + result, text)
     
-    #------------------------------------
-    #Lower case
-    text = text.lower()
     #Delete punctuation signs
     # Define punctuation
     punctuations = '''!()-[]{};:'"\,<>./?@#$%^&*_~'''
@@ -81,9 +94,16 @@ def main(args):
     #Substitute
     for char in punctuations:
         text = text.replace(char,' ')
-        
+    
+    #------------------------------------
+    #Lower case
+    text = text.lower()
+    
+    
+    
     #Delete space key
     words = filter(None, text.split(' '))
+    
     #------------------------------------
     #Let's count words
     d = {}
@@ -105,10 +125,11 @@ def main(args):
         
             if ("word") in d:
                 value = d.get("word")
+                value += 1
             else:
                 value = 1
             
-            d.update({ "word" : value + 1})
+            d.update({ "word" : value})
             
             
     #Upload file with dictionary to COS
