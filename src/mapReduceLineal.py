@@ -17,7 +17,7 @@ def mapRed ():
     #lineList = list(filter(None, lineList))
     #Delete punctuation signs
     # Define punctuation
-    punctuations = '''!()-[]{};:'"\,<>.=?@#$%^&*_~\n\r\t'''
+    punctuations = '''!()-[]{};:'"\,<>.?@#$%^&*_~=\n\r\t'''
     
     
     dicts = []
