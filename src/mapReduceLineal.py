@@ -4,90 +4,98 @@ Created on 20 mar. 2019
 @author: aaroni34
 '''
 
-def mapRed ():
-    ###########
-    #Read file
-    
-    f = open("pg2000.txt", "rb")
-    inputString = f.read().decode('utf-8-sig')
-    
-    inputString = inputString.replace('.','')
-    
-    lineList = inputString.splitlines()
-    #lineList = list(filter(None, lineList))
-    #Delete punctuation signs
-    # Define punctuation
-    punctuations = '''!()-[]{};:'"\,<>.?@#$%^&*_~=\n\r\t'''
-    
-    
-    dicts = []
-    dicts2 = []
-    
-    for x in lineList:
-        newdict = {}
-        newdict2 = {}
-        #Substitute
-        for char in punctuations:
-            x = x.replace(char,' ')
-        
-        #Delete space key
-        lineWords = filter(None, x.split(' '))
-        
-        
-        for word in lineWords:
-            if word in newdict:
-                value = newdict.get(word)
-                value+=1
-            else:
-                value = 1
-            
-            if "word" in newdict2:
-                value2 = newdict2.get("word")
-                value2 += 1
-            else:
-                value2 = 1
-            
-            newdict2.update({"word" : value2})
+from collections import OrderedDict
+import yaml, time
+from src import cos_backend
 
-            newdict.update({word : value})
+#-----------------------------------------------------------------------------
+#--------------------------Initializations-----------------------------------
+#-----------------------------------------------------------------------------
+#Load COS, Functions and RabbitAMQP information
+with open('ibm_cloud_config', 'r') as config_file:
+    try:
         
-        dicts.append(newdict)
-        dicts2.append(newdict2)
-    
-    finaldict = {}
-    finaldict2 = {}
-    
-    for x in dicts:
-        for key, value in x.items():
-            
-            if key in finaldict:
-                finalValue = finaldict.get(key)
-                finalValue += value
-            else:
-                finalValue = value
+        res = yaml.safe_load(config_file)
         
-            finaldict.update({key : finalValue})
-    
-    for x in dicts2:
-        for key, value in x.items():
-            
-            if key in finaldict2:
-                finalValue = finaldict2.get(key)
-                finalValue += value
-            else:
-                finalValue = value
+    except yaml.YAMLError as exc:
         
-            finaldict2.update({key : finalValue})
-    
-    
-    print(finaldict)
-    print(finaldict2)
-    
+        print(exc)
 
-mapRed()
+#Instantiate connector and cos
+cos = cos_backend.cos_backend(res['ibm_cos'])
 
-punc = '''!)]}-;:'",>.?'''
-char = 'm'
+#Start timing
+start = time.time()
+###########
+#Read file
+f = open("gutenberg-100M.txt", "rb")
+inputString = f.read().decode('latin-1')
 
-if (punc.find(char) == -1):
-    print("YEs")
+
+#Delete punctuation signs
+# Define punctuation
+punctuations = '''!()-[]{};:'"\,<>.?@#$%^&*_~=\n\r\t'''
+
+#Substitute
+for char in punctuations:
+    inputString = inputString.replace(char,' ')
+
+inputString = inputString.lower()
+
+#Delete space key
+inputString = filter(None, inputString.split(' '))
+
+dicts = {}
+dicts2 = {}
+
+#Word Count
+for word in inputString:
+    if word in dicts:
+        value = dicts.get(word)
+        value+=1
+    else:
+        value = 1
+
+    dicts.update({word : value})
+
+#Two times for simulating orchestrator 
+###########
+#Read file
+f = open("gutenberg-100M.txt", "rb")
+inputString = f.read().decode('latin-1')
+
+#Start timing
+start = time.time()
+#Delete punctuation signs
+# Define punctuation
+punctuations = '''!()-[]{};:'"\,<>.?@#$%^&*_~=\n\r\t'''
+
+#Substitute
+for char in punctuations:
+    inputString = inputString.replace(char,' ')
+
+inputString = inputString.lower()
+
+#Delete space key
+inputString = filter(None, inputString.split(' '))
+
+#Counting Words
+for word in inputString:
+    
+    if ("word") in dicts2:
+        value2 = dicts2.get("word")
+        value2 += 1
+    else:
+        value2 = 1
+    
+    dicts2.update({"word" : value2})
+
+dicts = dict(OrderedDict(sorted(dicts.items(), key = lambda x: x[1])))
+
+#end time
+end = time.time()
+
+#print(dicts)
+print(dicts2)
+print( "Time: ", end - start, "seconds")
+    

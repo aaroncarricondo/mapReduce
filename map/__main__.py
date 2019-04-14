@@ -22,9 +22,6 @@ def main(args):
     params = pika.URLParameters(url)
     connection = pika.BlockingConnection(params)
     channel = connection.channel() # start a channel
-    channel.queue_declare(queue='map_queue', durable=True, exclusive=False, auto_delete=False) # Declare a queue
-        
-    #---------------------------------------------------------------------------------------
     
     #Instanciate cos
     cos = cos_backend.cos_backend(args)
@@ -33,16 +30,16 @@ def main(args):
     #Get partition
     text = cos.get_object("noobucket", name, extra_get_args=inter)
     #Decode binary to String
-    text = text.decode('utf-8-sig')
+    text = text.decode('latin-1')
     
-    #Parse text --> delete punctuations
+    #    Parse text --> replace punctuations with blanks
     # Define punctuation
     punctuations = '''!()-[]{};:'"\,<>.?@#$%^&*_~=\n\r\t'''
-    
     #Substitute
     for char in punctuations:
         text = text.replace(char,' ')
     
+    #--------------------------------------------------------------------------------------
     #Don't take the last word if it doesn't end in Blank
     last_char = text[-1:]
     
@@ -65,11 +62,13 @@ def main(args):
             #Get text file
             char_aux = cos.get_object("noobucket", name, extra_get_args=inter)
             #Decode binary to String
-            char_aux = char_aux.decode('utf-8-sig')
+            char_aux = char_aux.decode('latin-1')
             
-            #If its a blank, stop collecting characters
-            if (char_aux != ' '):
-                new_word += char_aux
+            
+            if (punctuations.find(char_aux) == -1 and char_aux != ' '):
+                
+                new_word = char_aux + new_word
+            #If its a blank or a punctuation sign stop collecting characters
             else:
                 break;
             
@@ -82,18 +81,13 @@ def main(args):
     #Lower case
     text = text.lower()
     
-    #----------------------------------------------------------------------------------------
-    #----------------------------------------------------------------------------------------
-    # For debugging ...
-    #cos.put_object("noobucket", "text" + result, text)
-    
     #Delete space key and split words
     words = filter(None, text.split(' '))
     
-    #------------------------------------
+    #--------------------------------------------------------------------------------------
     #Let's count words
     d = {}
-    if ( option == "CW"):
+    if ( option == "WC"):
     
         for word in words:
             
@@ -130,4 +124,4 @@ def main(args):
     
     #---------------------------------------------------------------------------------------
     
-    return d
+    return {"done" : "done"}

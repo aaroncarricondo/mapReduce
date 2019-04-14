@@ -20,7 +20,6 @@ def main(args):
     params = pika.URLParameters(url)
     connection = pika.BlockingConnection(params)
     channel = connection.channel() # start a channel
-    channel.queue_declare(queue='reduce_queue', durable=True, exclusive=False, auto_delete=False) # Declare a queue
         
     #---------------------------------------------------------------------------------------
     
@@ -46,8 +45,6 @@ def main(args):
         #Get the dictionary
         d = cos.get_object("noobucket", name).decode('utf-8-sig')
         d = ast.literal_eval(d)
-        #Delete the dictionary
-        cos.delete_object("noobucket", name)
         
         #Check and upadte value in dictionary
         for key, value in d.items():
@@ -62,10 +59,11 @@ def main(args):
             
             
     #Order dictionary
-    a = OrderedDict(sorted(final_dict.items(), key = lambda x: x[1]))
+    if (option == 'WC' ):
+        final_dict = dict(OrderedDict(sorted(final_dict.items(), key = lambda x: x[1])))
     
     #Upload the result dictionary
-    cos.put_object("noobucket", resultName, str(dict(a)))
+    cos.put_object("noobucket", resultName, str(final_dict))
     
     #---------------------------------------------------------------------------------------
     
@@ -78,4 +76,4 @@ def main(args):
     #---------------------------------------------------------------------------------------
     
     
-    return final_dict
+    return {"done" : "done"}
