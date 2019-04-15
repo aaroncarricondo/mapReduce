@@ -56,7 +56,7 @@ channel = connection.channel() # start a channel
 #----------------------
 #----- MAP QUEUE ------
 channel.queue_delete('map_queue')
-channel.queue_declare(queue='map_queue', durable=True, exclusive=False, auto_delete=False)
+channel.queue_declare(queue='map_queue')
 
 # Start our counter at 0
 messages = 0
@@ -80,7 +80,7 @@ channel.basic_consume(callback_map, queue='map_queue')
 #----------------------
 #---- REDUCE QUEUE ----
 channel.queue_delete('reduce_queue')
-channel.queue_declare(queue='reduce_queue', durable=True, exclusive=False, auto_delete=False)
+channel.queue_declare(queue='reduce_queue')
 
 # Method that will receive our messages and stop
 def callback_reduce(channel, method, header, body): 
