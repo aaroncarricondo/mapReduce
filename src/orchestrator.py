@@ -6,7 +6,16 @@ Created on 13 mar. 2019
 
 import sys, yaml, numpy, pika, time
 from src import cos_backend, ibm_cf_connector
-from time import sleep
+
+#-----------------------------------------------------------------------------
+#--------------------------     OPTION     -----------------------------------
+#-----------------------------------------------------------------------------
+option = 2
+
+while (option != 0 and option != 1):
+    print("0. WordCount")
+    print("1. Counting Words")
+    option = int(input("Choose:"))
 
 #-----------------------------------------------------------------------------
 #--------------------------Initializations-----------------------------------
@@ -69,10 +78,10 @@ def callback_map(channel, method, header, body):
     # Acknowledge message receipt (Eliminate receipt messages)
     channel.basic_ack(delivery_tag = method.delivery_tag)
     
-    # We've received numDiv * 2 messages, stop consuming
+    # We've received numDiv messages, stop consuming
     global messages 
     messages += 1
-    if messages >= (numDiv * 2):
+    if messages >= numDiv:
         channel.stop_consuming()
 
 channel.basic_consume(callback_map, queue='map_queue')
@@ -93,7 +102,7 @@ def callback_reduce(channel, method, header, body):
     # We've received numDiv * 2 messages, stop consuming
     global messages 
     messages += 1
-    if messages >= 2:
+    if messages >= 1:
         channel.stop_consuming()
 
 #Not declaring the basic consume now.
@@ -139,14 +148,16 @@ for i in range(0, numDiv):
     start = str(intervals[i])
     fi = str(intervals[i+1] - 1)
     
-    #WordCount
-    params.update({"start" : start, "fi" : fi, "resultName" : "mapWC" + str(i), "option" : "WC"})
-    connector.invoke("map", params) 
-    
-    #CountWords
-    params.update({"resultName" : "mapCW" + str(i), "option" : "CW"})
-    connector.invoke("map", params)
-       
+    params.update({"start" : start, "fi" : fi})
+
+    if (option == 0):
+        #WordCount
+        params.update({"start" : start, "fi" : fi, "resultName" : "mapWC" + str(i), "option" : "WC"})
+        connector.invoke("map", params) 
+    else: #CountWords
+        params.update({"resultName" : "mapCW" + str(i), "option" : "CW"})
+        connector.invoke("map", params)
+           
     
 #-------------------------------
 #------MAP------CONSUME---------
@@ -162,14 +173,14 @@ channel.start_consuming()
 params = res['ibm_cos']
 params.update({"ibm_rabbit" : rabbit})
 
-#-------WORD COUNT------------    
-params.update({"numDiv" : str(numDiv), "resultName" : "finalDictWC", "option" : "WC"})
-connector.invoke("reduce", params)
-
-#-------COUNT WORDS------------
-params.update({"numDiv" : str(numDiv), "resultName" : "finalDictCW" , "option" : "CW"})
-connector.invoke("reduce", params)
-
+if (option == 0):
+    #-------WORD COUNT------------    
+    params.update({"numDiv" : str(numDiv), "resultName" : "finalDictWC", "option" : "WC"})
+    connector.invoke("reduce", params)
+else:
+    #-------COUNT WORDS------------
+    params.update({"numDiv" : str(numDiv), "resultName" : "finalDictCW" , "option" : "CW"})
+    connector.invoke("reduce", params)
 
 #-------------------------------
 #----REDUCE------CONSUME--------
@@ -193,6 +204,6 @@ for i in cos.list_objects("noobucket", "map"):
 #WordCount
 #print(cos.get_object("noobucket", "finalDictWC").decode('utf-8-sig'))
 #CountWords
-print(cos.get_object("noobucket", "finalDictCW").decode('utf-8-sig'))
+#print(cos.get_object("noobucket", "finalDictCW").decode('utf-8-sig'))
 print( "Time: ", end_time - start_time, "seconds")
 

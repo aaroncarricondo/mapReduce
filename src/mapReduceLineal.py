@@ -21,6 +21,16 @@ with open('ibm_cloud_config', 'r') as config_file:
         
         print(exc)
 
+#-----------------------------------------------------------------------------
+#--------------------------     OPTION     -----------------------------------
+#-----------------------------------------------------------------------------
+option = 2
+
+while (option != 0 and option != 1):
+    print("0. WordCount")
+    print("1. Counting Words")
+    option = int(input("Choose:"))
+
 #Instantiate connector and cos
 cos = cos_backend.cos_backend(res['ibm_cos'])
 
@@ -28,7 +38,7 @@ cos = cos_backend.cos_backend(res['ibm_cos'])
 start = time.time()
 ###########
 #Read file
-f = open("gutenberg-100M.txt", "rb")
+f = open("gutenberg-1G.txt", "rb")
 inputString = f.read().decode('latin-1')
 
 
@@ -46,56 +56,39 @@ inputString = inputString.lower()
 inputString = filter(None, inputString.split(' '))
 
 dicts = {}
-dicts2 = {}
-
-#Word Count
-for word in inputString:
-    if word in dicts:
-        value = dicts.get(word)
-        value+=1
-    else:
-        value = 1
-
-    dicts.update({word : value})
-
-#Two times for simulating orchestrator 
-###########
-#Read file
-f = open("gutenberg-100M.txt", "rb")
-inputString = f.read().decode('latin-1')
-
-#Start timing
-start = time.time()
-#Delete punctuation signs
-# Define punctuation
-punctuations = '''!()-[]{};:'"\,<>.?@#$%^&*_~=\n\r\t'''
-
-#Substitute
-for char in punctuations:
-    inputString = inputString.replace(char,' ')
-
-inputString = inputString.lower()
-
-#Delete space key
-inputString = filter(None, inputString.split(' '))
-
-#Counting Words
-for word in inputString:
     
-    if ("word") in dicts2:
-        value2 = dicts2.get("word")
-        value2 += 1
-    else:
-        value2 = 1
+if (option == 0):   
+    #Word Count
+    for word in inputString:
+        if word in dicts:
+            value = dicts.get(word)
+            value+=1
+        else:
+            value = 1
     
-    dicts2.update({"word" : value2})
+        dicts.update({word : value})
+        
+    dicts = dict(OrderedDict(sorted(dicts.items(), key = lambda x: x[1])))
 
-dicts = dict(OrderedDict(sorted(dicts.items(), key = lambda x: x[1])))
+else:
+
+    dicts2 = {}
+    #Counting Words
+    for word in inputString:
+        
+        if ("word") in dicts2:
+            value2 = dicts2.get("word")
+            value2 += 1
+        else:
+            value2 = 1
+        
+        dicts2.update({"word" : value2})
+    
 
 #end time
 end = time.time()
 
 #print(dicts)
-print(dicts2)
+#print(dicts2)
 print( "Time: ", end - start, "seconds")
     
