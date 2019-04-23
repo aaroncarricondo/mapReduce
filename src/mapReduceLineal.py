@@ -5,7 +5,7 @@ Created on 20 mar. 2019
 '''
 
 from collections import OrderedDict
-import yaml, time
+import yaml, time, sys
 from src import cos_backend
 
 #-----------------------------------------------------------------------------
@@ -38,7 +38,8 @@ cos = cos_backend.cos_backend(res['ibm_cos'])
 start = time.time()
 ###########
 #Read file
-f = open("gutenberg-1G.txt", "rb")
+file_name = sys.argv[1]
+f = open(file_name, "rb")
 inputString = f.read().decode('latin-1')
 
 
